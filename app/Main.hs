@@ -1,6 +1,13 @@
+{-  -*- coding:utf-8 -*-  -}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Main (main) where
 
-import GitCommits
+import CLIFlags
+import qualified PrepareRemotesMode
 
 main :: IO ()
-main = undefined
+main = do
+  flags <- getFlags
+  case flags of
+    PrepareRemotesFlags{} -> PrepareRemotesMode.run flags
+  return ()
