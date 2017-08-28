@@ -3,11 +3,11 @@
 module Main (main) where
 
 import CLIFlags
-import qualified PrepareRemotesMode
+import qualified Remotes2LocalMode
 
 main :: IO ()
 main = do
   flags <- getFlags
   case flags of
-    PrepareRemotesFlags{} -> PrepareRemotesMode.run flags
+    Remotes2LocalFlags{} -> Remotes2LocalMode.run flags
   return ()
