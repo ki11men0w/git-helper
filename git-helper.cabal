@@ -27,10 +27,12 @@ executable gith
                      , time
                      , text
                      , containers
+                     , attoparsec
   default-language:    Haskell2010
   other-modules:       Paths_git_helper
                      , CLIFlags
                      , Remotes2LocalMode
+                     , FixFixWordCommitMode
 
 library
   hs-source-dirs:      src
