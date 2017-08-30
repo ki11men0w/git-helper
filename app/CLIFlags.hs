@@ -1,4 +1,5 @@
 {-  -*- coding:utf-8 -*-  -}
+{-# OPTIONS_GHC -fno-cse #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 module CLIFlags (Flags(..), getFlags) where
 
