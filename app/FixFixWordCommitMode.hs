@@ -2,7 +2,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 module FixFixWordCommitMode (run) where
 
@@ -15,17 +14,12 @@ import Control.Monad.Reader
 import Control.Monad.IO.Class (liftIO)
 
 import Data.Monoid ((<>))
-import System.Exit (ExitCode(..))
-import System.Process
 import Data.List (partition, sort, intersect)
 import System.IO (stdout, hFlush)
 import Data.Maybe (mapMaybe, fromMaybe)
 import Data.Either (isRight)
 import Control.Applicative (many)
 
-import Data.Version (showVersion)
-
-import qualified Data.Text as T
 import Data.Text (pack, unpack)
 import Data.Attoparsec.Text.Lazy
 
@@ -60,7 +54,7 @@ process = do
     isSpecialBranchName :: RefName -> Bool
     isSpecialBranchName = isSpecialBranchEx branchesToInclude branchesToExclude
     isMergedCommit' = isMergedCommit commitsMap
-    correctThisBranch (B2R refName _ commit revert2)
+    correctThisBranch (B2R refName _ _ revert2)
       | refName `elem` branchesToExclude = False
       | refName `elem` branchesToInclude = True
       | not $ isMergedCommit' revert2 = False
@@ -90,7 +84,7 @@ process = do
         else liftIO $ putStrLn "These branches will be reverted one/several commit(s) back in the remote repository 'origin':"
       liftIO . mapM_ print . sort . map b2rRefName $ branches4Correction
       (\x -> x == "Y" || x == "y") <$> liftIO (putStr "Are you sure? [Y/N]: " >> hFlush stdout >> getLine)
-  
+
 
 isFixWordCommit :: GitCommit -> Bool
 isFixWordCommit = (=="fix word commit") . fromMaybe "" . message
@@ -170,8 +164,8 @@ getRevertCount commitsMap commit =
           [c] -> if isFixWordCommit c
                  then findNext c (succ depth)
                  else Just (c, depth)
-          _ -> Nothing 
-  
+          _ -> Nothing
+
 
 getSutableFixTheWordCommits :: GitCommitsMap -> [GitCommit]
 getSutableFixTheWordCommits commitsMap =
@@ -184,7 +178,6 @@ getCommitsToRevert :: GitCommitsMap -> [(GitCommit, (GitCommit, Int))]
 getCommitsToRevert commitsMap =
   mapMaybe withRevertCount . getSutableFixTheWordCommits $ commitsMap
   where
-    getSutableFixTheWordCommits' = getSutableFixTheWordCommits commitsMap
     getRevertCount' = getRevertCount commitsMap
 
     withRevertCount :: GitCommit -> Maybe (GitCommit, (GitCommit, Int))

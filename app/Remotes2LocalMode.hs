@@ -4,7 +4,6 @@
 module Remotes2LocalMode (run) where
 
 import System.IO (stdout, hFlush)
-import Debug.Trace (trace)
 import Data.Monoid ((<>))
 import CLIFlags (Flags(Remotes2LocalFlags), ignore_tags, ignore_branches, stay_orig_tags, dry_run, force)
 import GitCommits
@@ -15,7 +14,7 @@ import qualified Data.Text as T
 
 import qualified Data.Set as Set
 import qualified Data.Map as Map
-import Data.Maybe (mapMaybe, maybe)
+import Data.Maybe (mapMaybe)
 import ProcessLib (runCom)
 
 checkFlags :: Flags -> IO ()
@@ -54,7 +53,7 @@ process :: (MonadReader Conf m, MonadState TraverseState m, MonadIO m) => m ()
 process = do
   getTagSubstitutions
   getBranchSubstitutions
-  
+
   fireUp <- mustRun
   when fireUp $ do
     applyTagSubstitutions
@@ -165,7 +164,7 @@ traverseFromTag commit = do
             combine Nothing = Just Set.empty
 
 
-newBranchName repoName refName = repoName <> "/" <> refName 
+newBranchName repoName refName = repoName <> "/" <> refName
 
 getBranchSubstitutions :: (MonadReader Conf m, MonadState TraverseState m) => m ()
 getBranchSubstitutions = do
@@ -187,7 +186,7 @@ getBranchSubstitutions = do
           newBranchName repoName refName `notElem` getBranches commit
 
         checkRepoName (repoName, _) = isSuitableRepoName repoName
-          
+
 
 applyBranchSubstitutions :: (MonadReader Conf m, MonadState TraverseState m, MonadIO m) => m ()
 applyBranchSubstitutions =

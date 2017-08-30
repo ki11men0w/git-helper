@@ -36,7 +36,7 @@ allModes programName =
   modes [remotes2LocalFlags, fixFixWordCommitFlags] &=
   program programName &=
   summary ("Git helper. Misc utilities related to 'git'. Version " ++ programVersion) &=
-  help ("Available commands: " ++ (intercalate ", " [remotes2LocalModeName, fixFixWordCommitModeName]))
+  help ("Available commands: " ++ intercalate ", " [remotes2LocalModeName, fixFixWordCommitModeName])
   where
     programVersion = showVersion version ++ " (haskell)"
 
