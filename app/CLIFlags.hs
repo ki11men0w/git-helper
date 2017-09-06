@@ -16,8 +16,12 @@ getFlags =
 -- | Command line flags
 data Flags = Remotes2LocalFlags
              {
-               ignore_tags :: Bool
-             , ignore_branches :: Bool
+               tag :: [String]
+             , no_tag :: [String]
+             , branch :: [String]
+             , no_branch :: [String]
+             , repo :: [String]
+             , no_repo :: [String]
              , stay_orig_tags :: Bool
              , dry_run :: Bool
              , force :: Bool
@@ -45,17 +49,40 @@ forceMsg x = x &= help "Without this option user will always be prompted before 
 
 dryRunMsg x = x &= help "Do not modify anything. Only print what will be done" &= explicit &= name "dry-run"
 
+regexTyp = "REGEX"
+
 
 -- | Commmand line flags definition for 'Remotes to Local' mode
 remotes2LocalFlags :: Flags
 remotes2LocalFlags =
   Remotes2LocalFlags
-  { ignore_tags =
+  {
+    repo =
       def &=
-      help "Do not process tags"
-  , ignore_branches =
+      typ regexTyp &=
+      help ("Process only remote repos that names (as `git remote` command prints) match the "++regexTyp++". If option is specified multiply times then all remote repos that names match any of specified patterns will be selected")
+  , no_repo =
       def &=
-      help "Do not process branches"
+      typ regexTyp &=
+      help ("Ignore remote repos that names (as `git remote` command prints) match the "++regexTyp++". If option is specified multiply times then all remote repos that names match any of specified patterns will be ignored. This option take precedence over `--repo`: if some tag match both options then it will be ignored")
+  , tag =
+      def &=
+      typ regexTyp &=
+      help ("Process only tags that names match the "++regexTyp++". If option is specified multiply times then all tags that match any of specified patterns will be selected")
+  , no_tag =
+      def &=
+      opt ".*" &=
+      typ regexTyp &=
+      help ("Ignore tags that names match the "++regexTyp++". If option is specified multiply times then all tags that match any of specified patterns will be ignored. If given without pattern then all tags will be ignored. This option take precedence over `--tag`: if some tag match both options then it will be ignored")
+  , branch =
+      def &=
+      typ regexTyp &=
+      help ("Process only branches that names match the "++regexTyp++". If option is specified multiply times then all branches that match any of specified patterns will be selected")
+  , no_branch =
+      def &=
+      opt ".*" &=
+      typ regexTyp &=
+      help ("Ignore branches that names match the "++regexTyp++". If option is specified multiply times then all branches that match any of specified patterns will be ignored. If given without pattern then all branches will be ignored. This option take precedence over `--branch`: if some branch match both options then it will be ignored")
   , stay_orig_tags =
       def &=
       help "Do not delete original tags from commits related to remote branches"

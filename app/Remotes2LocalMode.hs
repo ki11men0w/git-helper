@@ -5,7 +5,7 @@ module Remotes2LocalMode (run) where
 
 import System.IO (stdout, hFlush)
 import Data.Monoid ((<>))
-import CLIFlags (Flags(Remotes2LocalFlags), ignore_tags, ignore_branches, stay_orig_tags, dry_run, force)
+import CLIFlags (Flags(Remotes2LocalFlags), tag, no_tag, branch, no_branch, repo, no_repo, stay_orig_tags, dry_run, force)
 import GitCommits
 import Control.Monad.Reader
 import Control.Monad.State
@@ -16,6 +16,8 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Data.Maybe (mapMaybe)
 import ProcessLib (runCom)
+import Text.Regex.TDFA
+import Control.Monad.Extra (concatMapM, filterM)
 
 checkFlags :: Flags -> IO ()
 checkFlags f@Remotes2LocalFlags{} =
@@ -99,7 +101,7 @@ applyTagSubstitutions =
 
 getTagSubstitutions :: (MonadReader Conf m, MonadState TraverseState m) => m ()
 getTagSubstitutions = do
-  ignoreTags <- ignore_tags . getFlags <$> ask
+  ignoreTags <- elem ".*" . no_tag . getFlags <$> ask
   unless ignoreTags $ do
     topCommits <- getTopCommits . getCommits <$> ask
     mapM_ traverseForTagWithClearRepoNames topCommits
@@ -112,10 +114,9 @@ getTagSubstitutions = do
 isSuitableRepoName :: RepoName -> Bool
 isSuitableRepoName = (/=) "origin"
 
-
-getRemoteRepoNames :: GitCommit -> [RepoName]
-getRemoteRepoNames =
-  filter isSuitableRepoName . fmap fst . getRemoteBranches
+getRemoteRepoNames :: (RepoName -> Bool) -> GitCommit -> [RepoName]
+getRemoteRepoNames check =
+  filter check . fmap fst . getRemoteBranches
 
 traverseForTag :: (MonadReader Conf m, MonadState TraverseState m) => GitCommit -> m ()
 traverseForTag commit = do
@@ -128,23 +129,25 @@ traverseForTag commit = do
     applyTags
     mapM_ traverseForTag (hashesToCommits commitsMap $ parents commit)
   where
-    addRepoNames :: (MonadState TraverseState m) => m ()
+    addRepoNames :: (MonadReader Conf m, MonadState TraverseState m) => m ()
     addRepoNames = do
       st <- get
-      put st{ metRepoNames = Set.union (metRepoNames st) (Set.fromList $ getRemoteRepoNames commit) }
+      conf <- ask
+      put st{ metRepoNames = Set.union (metRepoNames st) (Set.fromList $ getRemoteRepoNames isSuitableRepoName commit) }
 
     applyTags :: (MonadReader Conf m, MonadState TraverseState m) => m ()
     applyTags = do
-      allRepoNames <- Set.toList . Set.fromList . concatMap getRemoteRepoNames . toCommits . getCommits <$> ask
+      conf <- ask
       TraverseState{metRepoNames = metRepoNames'} <- get
       let
-        existingTags = getTags commit
+        existingTags = filter (isMatchTag conf) . getTags $ commit
         isTagAlreadyExists tagName = tagName `elem` existingTags
-        metRepoNamesList = Set.toList metRepoNames'
+        selectedRepoNamesList = filter (isMatchRepoName conf) . Set.toList $ metRepoNames'
         getNewTagName repoName originTagName = repoName <> "/" <> originTagName
+        allRepoNames = Set.toList . Set.fromList . concatMap (getRemoteRepoNames isSuitableRepoName) . toCommits . getCommits $ conf
         isPrefixedWithAnyRepoName tagName = any (`T.isPrefixOf` (tagName <> "/")) allRepoNames
       mapM_ addTagSubstitution
-        [ (e, getNewTagName r e) | r <- metRepoNamesList, e <- existingTags
+        [ (e, getNewTagName r e) | r <- selectedRepoNamesList, e <- existingTags
                                  , not ( isTagAlreadyExists (getNewTagName r e) || isPrefixedWithAnyRepoName e )]
       unless (Set.null metRepoNames') $
         mapM_ addTagForDeletion . filter (not . isPrefixedWithAnyRepoName) $ existingTags
@@ -168,24 +171,24 @@ newBranchName repoName refName = repoName <> "/" <> refName
 
 getBranchSubstitutions :: (MonadReader Conf m, MonadState TraverseState m) => m ()
 getBranchSubstitutions = do
-  ignoreBranches <- ignore_branches . getFlags <$> ask
+  ignoreBranches <- elem ".*" . no_branch . getFlags <$> ask
   unless ignoreBranches $ do
-    commits <- toCommits . getCommits <$> ask
     st <- get
-    put st{ branchSubs = Set.fromList . concatMap oneCommit $ commits }
+    conf <- ask
+    put st{ branchSubs = Set.fromList . concatMap (oneCommit conf) . toCommits . getCommits $ conf }
   where
     getFromRef (GitRemoteBranch repoName refName) = Just (repoName, refName)
     getFromRef _ = Nothing
 
-    oneCommit :: GitCommit -> [(RepoName, RefName)]
-    oneCommit commit =
-      filter checkRepoName . filter notExists . mapMaybe getFromRef . refs $ commit
+    oneCommit :: Conf -> GitCommit -> [(RepoName, RefName)]
+    oneCommit conf commit =
+      filter (isMatchBranch conf . snd) . filter (checkRepoName conf) . filter notExists . mapMaybe getFromRef . refs $ commit
       where
         notExists :: (RepoName, RefName) -> Bool
         notExists (repoName, refName) =
           newBranchName repoName refName `notElem` getBranches commit
 
-        checkRepoName (repoName, _) = isSuitableRepoName repoName
+        checkRepoName conf (repoName, _) = isMatchRepoName conf repoName
 
 
 applyBranchSubstitutions :: (MonadReader Conf m, MonadState TraverseState m, MonadIO m) => m ()
@@ -198,3 +201,37 @@ applyBranchSubstitutions =
       liftIO . runCom dryRun $ "git branch --track " <> newBranchName' <> " --force " <> "remotes/" <> newBranchName'
       where
         newBranchName' = newBranchName repoName refName
+
+isMatchRepoName :: Conf -> RepoName -> Bool
+isMatchRepoName conf repoName =
+  let
+    flags = getFlags conf
+    repo' = repo flags
+    no_repo' = no_repo flags
+    checkRegex regex = T.unpack repoName =~ regex :: Bool
+    isSelected = null repo' || any checkRegex repo'
+    isIgnored = any checkRegex no_repo'
+    isOriginRepo = not . isSuitableRepoName $ repoName
+  in not isOriginRepo && isSelected && not isIgnored
+
+isMatchTag :: Conf -> RefName -> Bool
+isMatchTag conf tagName =
+  let
+    flags = getFlags conf
+    tag' = tag flags
+    no_tag' = no_tag flags
+    checkRegex regex = T.unpack tagName =~ regex :: Bool
+    isSelected = null tag' || any checkRegex tag'
+    isIgnored = any checkRegex no_tag'
+  in isSelected && not isIgnored
+
+isMatchBranch :: Conf -> RefName -> Bool
+isMatchBranch conf branchName =
+  let
+    flags = getFlags conf
+    branch' = branch flags
+    no_branch' = no_branch flags
+    checkRegex regex = T.unpack branchName =~ regex :: Bool
+    isSelected = null branch' || any checkRegex branch'
+    isIgnored = any checkRegex no_branch'
+  in isSelected && not isIgnored
