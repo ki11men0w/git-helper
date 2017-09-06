@@ -195,6 +195,6 @@ applyBranchSubstitutions =
     applyOneBranch :: (MonadReader Conf m, MonadIO m) => (RepoName, RefName) -> m ()
     applyOneBranch (repoName, refName) = do
       dryRun <- dry_run . getFlags <$> ask
-      liftIO . runCom dryRun $ "git branch --track " <> newBranchName' <> " " <> "remotes/" <> newBranchName'
+      liftIO . runCom dryRun $ "git branch --track " <> newBranchName' <> " --force " <> "remotes/" <> newBranchName'
       where
         newBranchName' = newBranchName repoName refName
