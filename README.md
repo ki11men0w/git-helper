@@ -3,7 +3,7 @@
 
 This utility is written in `haskell` and you can build it from sources:
 ```sh
-git clone https://github.com/ki11men0w/git-helper.git
+git clone --recursive https://github.com/ki11men0w/git-helper.git
 cd git-helper
 stack install
 ```
