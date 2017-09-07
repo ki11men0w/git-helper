@@ -41,7 +41,8 @@ allModes programName =
   verbosity &=
   program programName &=
   summary ("Git helper. Misc utilities related to 'git'. Version " ++ programVersion) &=
-  help ("Available commands: " ++ intercalate ", " [remotes2LocalModeName, fixFixWordCommitModeName])
+
+  help ("Commands: \n" ++ (intercalate "\n" . map ("  "++)) [remotes2LocalModeName, fixFixWordCommitModeName])
   where
     programVersion = showVersion version ++ " (haskell)"
 
