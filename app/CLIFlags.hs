@@ -38,6 +38,7 @@ data Flags = Remotes2LocalFlags
 allModes :: String -> Flags
 allModes programName =
   modes [remotes2LocalFlags, fixFixWordCommitFlags] &=
+  verbosity &=
   program programName &=
   summary ("Git helper. Misc utilities related to 'git'. Version " ++ programVersion) &=
   help ("Available commands: " ++ intercalate ", " [remotes2LocalModeName, fixFixWordCommitModeName])

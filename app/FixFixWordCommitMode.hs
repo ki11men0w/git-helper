@@ -6,7 +6,7 @@
 module FixFixWordCommitMode (run) where
 
 import GitCommits
-import CLIFlags hiding (getFlags)
+import CLIFlags (Flags(FixFixWordCommitFlags), delete, include_branch, exclude_branch, dry_run, force)
 import ProcessLib (runCom)
 
 import Control.Monad (when, unless)
@@ -78,12 +78,16 @@ process = do
     liftIO $ mapM_ print . sort . map b2rRefName $ branchesStayUnchanged
   where
     askUser branches4Correction = do
-      delete' <- delete . getFlags <$> ask
-      if delete'
-        then liftIO $ putStrLn "These branches will be deleted from the remote repository 'origin':"
-        else liftIO $ putStrLn "These branches will be reverted one/several commit(s) back in the remote repository 'origin':"
-      liftIO . mapM_ print . sort . map b2rRefName $ branches4Correction
-      (\x -> x == "Y" || x == "y") <$> liftIO (putStr "Are you sure? [Y/N]: " >> hFlush stdout >> getLine)
+      force' <- force . getFlags <$> ask
+      if force'
+        then return True
+        else do
+          delete' <- delete . getFlags <$> ask
+          if delete'
+            then liftIO $ putStrLn "These branches will be deleted from the remote repository 'origin':"
+            else liftIO $ putStrLn "These branches will be reverted one/several commit(s) back in the remote repository 'origin':"
+          liftIO . mapM_ print . sort . map b2rRefName $ branches4Correction
+          (\x -> x == "Y" || x == "y") <$> liftIO (putStr "Are you sure? [Y/N]: " >> hFlush stdout >> getLine)
 
 
 isFixWordCommit :: GitCommit -> Bool

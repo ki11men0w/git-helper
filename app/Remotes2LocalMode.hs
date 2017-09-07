@@ -21,7 +21,7 @@ import Control.Monad.Extra (concatMapM, filterM)
 
 checkFlags :: Flags -> IO ()
 checkFlags f@Remotes2LocalFlags{} =
-  when (force f && dry_run f) $ error "Options --force and --dry-run are mutually exclusive"
+  return ()
 
 run :: Flags -> IO ()
 run flags = do
@@ -85,8 +85,7 @@ process = do
       isProposedChangesAbsent <- (&&) <$> (Map.null . tagSubs <$> get) <*> (Set.null . branchSubs <$> get)
       dryRun <- dry_run . getFlags <$> ask
       if isProposedChangesAbsent then return False
-      else if dryRun then return True
-           else askUserConfirmation
+      else askUserConfirmation
 
 applyTagSubstitutions :: (MonadReader Conf m, MonadState TraverseState m, MonadIO m) => m ()
 applyTagSubstitutions =
