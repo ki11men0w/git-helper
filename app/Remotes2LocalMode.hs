@@ -102,12 +102,12 @@ getTagSubstitutions = do
   ignoreTags <- ignore_tags . getFlags <$> ask
   unless ignoreTags $ do
     topCommits <- getTopCommits . getCommits <$> ask
-    mapM_ traverseFromTagWithClearRepoNames topCommits
+    mapM_ traverseForTagWithClearRepoNames topCommits
   where
-    traverseFromTagWithClearRepoNames commit = do
+    traverseForTagWithClearRepoNames commit = do
       st <- get
       put st{metRepoNames = Set.empty, passedCommits = Set.empty}
-      traverseFromTag commit
+      traverseForTag commit
 
 isSuitableRepoName :: RepoName -> Bool
 isSuitableRepoName = (/=) "origin"
@@ -117,8 +117,8 @@ getRemoteRepoNames :: GitCommit -> [RepoName]
 getRemoteRepoNames =
   filter isSuitableRepoName . fmap fst . getRemoteBranches
 
-traverseFromTag :: (MonadReader Conf m, MonadState TraverseState m) => GitCommit -> m ()
-traverseFromTag commit = do
+traverseForTag :: (MonadReader Conf m, MonadState TraverseState m) => GitCommit -> m ()
+traverseForTag commit = do
   st@TraverseState{passedCommits=passedCommits'} <- get
 
   when (Set.notMember (hash commit) passedCommits') $ do
@@ -126,7 +126,7 @@ traverseFromTag commit = do
     commitsMap <- getCommits <$> ask
     addRepoNames
     applyTags
-    mapM_ traverseFromTag (hashesToCommits commitsMap $ parents commit)
+    mapM_ traverseForTag (hashesToCommits commitsMap $ parents commit)
   where
     addRepoNames :: (MonadState TraverseState m) => m ()
     addRepoNames = do
