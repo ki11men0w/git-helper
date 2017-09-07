@@ -16,12 +16,12 @@ getFlags =
 -- | Command line flags
 data Flags = Remotes2LocalFlags
              {
-               tag :: [String]
+               repo :: [String]
+             , no_repo :: [String]
+             , tag :: [String]
              , no_tag :: [String]
              , branch :: [String]
              , no_branch :: [String]
-             , repo :: [String]
-             , no_repo :: [String]
              , stay_orig_tags :: Bool
              , dry_run :: Bool
              , force :: Bool
