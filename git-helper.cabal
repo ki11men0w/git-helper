@@ -29,7 +29,6 @@ executable gith
                      , containers
                      , attoparsec
                      , regex-tdfa
-                     , extra
   default-language:    Haskell2010
   other-modules:       Paths_git_helper
                      , CLIFlags

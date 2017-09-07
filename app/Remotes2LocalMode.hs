@@ -17,7 +17,6 @@ import qualified Data.Map as Map
 import Data.Maybe (mapMaybe)
 import ProcessLib (runCom)
 import Text.Regex.TDFA
-import Control.Monad.Extra (concatMapM, filterM)
 
 checkFlags :: Flags -> IO ()
 checkFlags f@Remotes2LocalFlags{} =
