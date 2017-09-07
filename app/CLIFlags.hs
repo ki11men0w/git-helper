@@ -31,6 +31,7 @@ data Flags = Remotes2LocalFlags
              , include_branch :: [String]
              , exclude_branch :: [String]
              , dry_run :: Bool
+             , force :: Bool
              }
   deriving (Show, Data, Typeable)
 
@@ -120,6 +121,8 @@ fixFixWordCommitFlags =
       typ "BRANCH"
   , dry_run =
       dryRunMsg def
+  , force =
+      forceMsg def
   } &=
   name fixFixWordCommitModeName &=
   help "Fix repo after `fix word commit` script used in Peter-Service" &=
