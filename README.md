@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/ki11men0w/git-helper.svg?branch=master)](https://travis-ci.org/ki11men0w/git-helper)
 # Git helper
 `gith` CLI utility for some tasks related to `git` source control management system.
 
