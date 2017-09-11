@@ -46,7 +46,7 @@ allModes programName =
 
   help ("Commands: \n" ++ (intercalate "\n" . map ("  "++)) [remotes2LocalModeName, fixFixWordCommitModeName])
   where
-    programVersion = showVersion version ++ " (haskell)"
+    programVersion = showVersion version 
 
 
 forceMsg x = x &= help "Without this option user will always be prompted before changes will be applied. With this option changes will be applied without user intervension"
