@@ -163,7 +163,7 @@ traverseForTag commit = do
       mapM_ addTagSubstitution
         [ (e, getNewTagName r e) | r <- selectedRepoNamesList, e <- selectedTags4Create
                                  , not (isTagAlreadyExists (getNewTagName r e))]
-      unless (Set.null metRepoNames') $
+      unless (null selectedRepoNamesList) $
         mapM_ addTagForDeletion selectedTags4Deletion
       where
         addTagSubstitution (origName, newName) = do
