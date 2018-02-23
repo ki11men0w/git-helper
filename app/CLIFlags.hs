@@ -134,8 +134,8 @@ fixFixWordCommitFlags =
   } &=
   name fixFixWordCommitModeName &=
   help "Fix repo after `fix word commit` script used in Peter-Service" &=
-  details [ "In Peter-Service to all git repositories the fix-word-commit script was applied for correction of problem with MS Word files with documentation. That script applied to many branches that does not require it."
-          , "This utility is designed to revert that unnecessary changes. Before changes will be applied you will be sked about your agreement."
+  details [ "In Peter-Service to all git repositories the fix-word-commit script has been applied for correction of problem with MS Word files with documentation. That script was applied to many branches that does not require it."
+          , "This utility is designed to revert that unnecessary changes. Before changes will be applied you will be asked about your agreement."
           ]
 
 fixFixWordCommitModeName = "fix-fix-word-commit"
