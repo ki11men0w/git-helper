@@ -15,7 +15,10 @@ To get help try:
 ```sh
 gith --help
 ```
-or if you have wide terminal:
+or if you have a wide terminal:
 ```sh
 gith --help=150
 ```
+
+This utility uses `git` executable and run it in a shell as `git`.
+Commonly it means that `git` utility must be available via `PATH` environment variable and must be runnable as `git` without path spec.
